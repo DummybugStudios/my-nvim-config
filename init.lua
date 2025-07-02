@@ -44,6 +44,7 @@ P.S. You can delete this when you're done too. It's your config now :)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 vim.o.sessionoptions="blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
+vim.o.termguicolors = true
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
@@ -69,6 +70,7 @@ vim.opt.rtp:prepend(lazypath)
 --    as they will be available in your neovim runtime.
 require('lazy').setup({
   -- NOTE: First, some plugins that don't require any configuration
+  --
 
   -- Git related plugins
   'tpope/vim-fugitive',
@@ -83,6 +85,20 @@ require('lazy').setup({
 
   -- TODO: Improve this configuration
   'ThePrimeagen/harpoon',
+
+
+  {
+    'uga-rosa/ccc.nvim',
+    config = function ()
+      require('ccc').setup({
+        highlighter = {
+          auto_enable = true,
+          lsp = true,
+        }
+        
+      })
+    end
+  },
 
   -- Multiple cursors
   {
@@ -224,7 +240,45 @@ require('lazy').setup({
   },
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim',  opts = {notify=false} },
+  { 
+    'folke/which-key.nvim',
+    opts = {
+      notify = false,
+      mappings = false,
+      keys = {
+        Up = '<Up> ',
+        Down = '<Down> ',
+        Left = '<Left> ',
+        Right = '<Right> ',
+        C = '<C-…> ',
+        M = '<M-…> ',
+        D = '<D-…> ',
+        S = '<S-…> ',
+        CR = '<CR> ',
+        Esc = '<Esc> ',
+        ScrollWheelDown = '<ScrollWheelDown> ',
+        ScrollWheelUp = '<ScrollWheelUp> ',
+        NL = '<NL> ',
+        BS = '<BS> ',
+        Space = '<Space> ',
+        Tab = '<Tab> ',
+        F1 = '<F1>',
+        F2 = '<F2>',
+        F3 = '<F3>',
+        F4 = '<F4>',
+        F5 = '<F5>',
+        F6 = '<F6>',
+        F7 = '<F7>',
+        F8 = '<F8>',
+        F9 = '<F9>',
+        F10 = '<F10>',
+        F11 = '<F11>',
+        F12 = '<F12>',
+      },
+
+    } 
+  },
+
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -508,7 +562,7 @@ end, { desc = '[/] Fuzzily search in current buffer' })
 -- vim.keymap.set('n', '<leader>gf', require('telescope.builtin').git_files, { desc = 'Search [G]it [F]iles' })
 -- =======
 vim.keymap.set('n', '<C-p>', require('telescope.builtin').git_files, { desc = 'Search Git Files' })
-vim.keymap.set('n', '<leader>sf', require('telescope.builtin').find_files, { desc = '[S]earch [F]iles' })
+vim.keymap.set('n', '<leader>sf', function() require('telescope.builtin').find_files{ hidden=true } end, { desc = '[S]earch [F]iles' })
 vim.keymap.set('n', '<leader>sh', require('telescope.builtin').help_tags, { desc = '[S]earch [H]elp' })
 vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { desc = '[S]earch current [W]ord' })
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
@@ -599,7 +653,9 @@ end, 0)
 
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
-local on_attach = function(_, bufnr)
+vim.api.nvim_create_autocmd("LspAttach",{callback = function(event)
+  print("LSP attaching")
+  local bufnr = event.buf
   -- NOTE: Remember that lua is a real programming language, and as such it is possible
   -- to define small helper and utility functions so you don't have to repeat yourself
   -- many times.
@@ -610,7 +666,6 @@ local on_attach = function(_, bufnr)
     if desc then
       desc = 'LSP: ' .. desc
     end
-
     vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
   end
 
@@ -651,6 +706,7 @@ local on_attach = function(_, bufnr)
     end
   })
 end
+})
 
 -- document existing key chains
 require('which-key').register {
@@ -717,12 +773,9 @@ local mason_lspconfig = require 'mason-lspconfig'
 mason_lspconfig.setup {
   ensure_installed = {},
   handlers = function(server_name)
-    require('lspconfig')[server_name].setup {
-      capabilities = capabilities,
-      on_attach = on_attach,
-      settings = servers[server_name],
-      filetypes = (servers[server_name] or {}).filetypes,
-    }
+    local server = servers[server_name] or {}
+    require('lspconfig')[server_name].setup(server)
+    
   end,
 }
 
@@ -798,4 +851,3 @@ cmp.setup {
 vim.keymap.set('n', '<leader>gs',vim.cmd.Git, { desc = "[G]it [S]tatus" })
 
 vim.keymap.set('n', '<C-/>', function() vim.cmd(":vsplit") end)
-
