@@ -593,17 +593,6 @@ vim.defer_fn(function()
       },
     },
     textobjects = {
-      select = {
-        enable = true,
-        lookahead = true,
-        keymaps = {
-          init_selection = '<c-space>',
-          node_incremental = '<c-space>',
-          scope_incremental = '<c-s>',
-          node_decremental = '<M-space>',
-        },
-      },
-      textobjects = {
         select = {
           enable = true,
           lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
@@ -648,7 +637,6 @@ vim.defer_fn(function()
         },
       },
     }
-  }
 end, 0)
 
 -- [[ Configure LSP ]]
