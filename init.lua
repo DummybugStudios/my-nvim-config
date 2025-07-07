@@ -86,6 +86,9 @@ require('lazy').setup({
   -- TODO: Improve this configuration
   'ThePrimeagen/harpoon',
 
+  -- Copilot
+  'github/copilot.vim',
+
 
   {
     'uga-rosa/ccc.nvim',
