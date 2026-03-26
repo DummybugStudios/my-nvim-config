@@ -94,7 +94,14 @@ require('lazy').setup({
   'ThePrimeagen/harpoon',
 
   -- Copilot
-  'github/copilot.vim',
+  
+  {
+    'github/copilot.vim',
+    config = function() 
+      vim.g.copilot_no_tab_map = true
+      vim.api.nvim_set_keymap("i", "<Right>", 'copilot#Accept("<Right>")', { silent = true, expr = true })
+    end
+  },
 
 
   {
@@ -109,8 +116,6 @@ require('lazy').setup({
       })
     end
   },
-
-  'github/copilot.vim',
 
   -- Multiple cursors
   {
