@@ -46,6 +46,13 @@ vim.g.maplocalleader = ' '
 vim.o.sessionoptions="blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
 vim.o.termguicolors = true
 
+
+-- Save file as sudo by typing :W
+vim.api.nvim_create_user_command('W', function()
+  vim.cmd("silent! write !sudo tee % > /dev/null")
+  vim.cmd("edit!")
+end, { desc = 'Save file as root' })
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
@@ -102,6 +109,8 @@ require('lazy').setup({
       })
     end
   },
+
+  'github/copilot.vim',
 
   -- Multiple cursors
   {
@@ -193,6 +202,15 @@ require('lazy').setup({
       }
     end
   },
+
+  {
+    "seblyng/roslyn.nvim",
+    ft = "cs",
+    opts = {
+      -- your configuration here
+    },
+  },
+
 
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
@@ -719,7 +737,12 @@ require('which-key').register({
 
 -- mason-lspconfig requires that these setup functions are called in this order
 -- before setting up the servers.
-require('mason').setup()
+require('mason').setup({
+  registries = {
+    "github:mason-org/mason-registry",
+    "github:Crashdummyy/mason-registry", -- Adds Roslyn support
+  }
+})
 require('mason-lspconfig').setup()
 
 -- Enable the following language servers
