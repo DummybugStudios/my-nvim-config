@@ -38,6 +38,9 @@ I hope you enjoy your Neovim journey,
 P.S. You can delete this when you're done too. It's your config now :)
 --]]
 
+-- My Settings
+require('custom.settings')
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
@@ -47,11 +50,6 @@ vim.o.sessionoptions="blank,buffers,curdir,folds,help,tabpages,winsize,winpos,te
 vim.o.termguicolors = true
 
 
--- Save file as sudo by typing :W
-vim.api.nvim_create_user_command('W', function()
-  vim.cmd("silent! write !sudo tee % > /dev/null")
-  vim.cmd("edit!")
-end, { desc = 'Save file as root' })
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
@@ -76,147 +74,6 @@ vim.opt.rtp:prepend(lazypath)
 --  You can also configure plugins after the setup call,
 --    as they will be available in your neovim runtime.
 require('lazy').setup({
-  -- NOTE: First, some plugins that don't require any configuration
-  --
-
-  -- Git related plugins
-  'tpope/vim-fugitive',
-  'tpope/vim-rhubarb',
-
-  -- Detect tabstop and shiftwidth automatically
-  'tpope/vim-sleuth',
-  'tpope/vim-surround',
-
-  -- Vim indent objects
-  'michaeljsmith/vim-indent-object',
-
-  -- TODO: Improve this configuration
-  'ThePrimeagen/harpoon',
-
-  -- Copilot
-  
-  {
-    'github/copilot.vim',
-    config = function() 
-      vim.g.copilot_no_tab_map = true
-      vim.api.nvim_set_keymap("i", "<Right>", 'copilot#Accept("<Right>")', { silent = true, expr = true })
-    end
-  },
-
-
-  {
-    'uga-rosa/ccc.nvim',
-    config = function ()
-      require('ccc').setup({
-        highlighter = {
-          auto_enable = true,
-          lsp = true,
-        }
-        
-      })
-    end
-  },
-
-  -- Multiple cursors
-  {
-    'mg979/vim-visual-multi',
-    branch = 'master',
-  },
-
-  -- I need my speedy terminal
-  {
-    'akinsho/toggleterm.nvim',
-    opts = {
-      open_mapping = [[<c-\>]]
-    }
-  },
-
-  -- Better tree
-  {
-    "nvim-neo-tree/neo-tree.nvim",
-    branch = "v3.x",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
-      "MunifTanjim/nui.nvim",
-      -- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
-    },
-    config = function ()
-      require('neo-tree').setup({
-        filesystem = {
-          follow_current_file = {
-            enabled = true
-          },
-          filtered_items = {
-            visible = false,
-            hide_dotfiles = false,
-            hide_gitignored = false,
-            hide_by_name = {
-              ".git",
-              ".DS_Store",
-            }
-          },
-        }
-      })
-    end
-  },
-
-  -- Linters
-  {
-    "nvimtools/none-ls.nvim",
-    config = function()
-      local null_ls = require("null-ls")
-      null_ls.setup({
-        sources = {
-          -- null_ls.builtins.diagnostics.jsonlint,
-          -- null_ls.builtins.diagnostics.editorconfig_checker,
-          -- null_ls.builtins.formatting.black,
-        }
-      })
-    end
-  },
-
-  {
-    'm4xshen/autoclose.nvim',
-    config = function()
-      require('autoclose').setup()
-    end
-  },
-
-  {
-    'rmagatti/auto-session',
-    config = function()
-      require('auto-session').setup{
-        log_level = "error",
-        auto_save_enabled = true,
-        auto_restore_enabled = true,
-        bypass_session_save_file_types = {"neo-tree"},
-        pre_save_cmds = { 
-          function()
-            require("neo-tree.sources.manager").close_all()
-          end,
-        },
-
-        cwd_change_handling = {
-          restore_upcoming_session = true,
-          pre_cwd_changed_hook = nil,
-          post_cwd_changed_hook = function()
-            require('lualine').refresh()
-          end
-        },
-      }
-    end
-  },
-
-  {
-    "seblyng/roslyn.nvim",
-    ft = "cs",
-    opts = {
-      -- your configuration here
-    },
-  },
-
-
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
   {
@@ -234,34 +91,6 @@ require('lazy').setup({
 
       -- Additional lua configuration, makes nvim stuff amazing!
       'folke/neodev.nvim',
-    },
-  },
-
-  {
-    -- Autocompletion
-    'hrsh7th/nvim-cmp',
-    dependencies = {
-      -- Snippet Engine & its associated nvim-cmp source
-      {
-        'L3MON4D3/LuaSnip',
-        build = (function()
-          -- Build Step is needed for regex support in snippets
-          -- This step is not supported in many windows environments
-          -- Remove the below condition to re-enable on windows
-          if vim.fn.has 'win32' == 1 then
-            return
-          end
-          return 'make install_jsregexp'
-        end)(),
-      },
-      'saadparwaiz1/cmp_luasnip',
-
-      -- Adds LSP completion capabilities
-      'hrsh7th/cmp-nvim-lsp',
-      'hrsh7th/cmp-path',
-
-      -- Adds a number of user-friendly snippets
-      'rafamadriz/friendly-snippets',
     },
   },
 
@@ -330,60 +159,6 @@ require('lazy').setup({
     },
   },
 
-  {
-    -- Theme inspired by Atom
-    'rose-pine/neovim',
-    as = 'rose-pine',
-    -- priority = 1000,
-    -- config = function()
-    --   vim.cmd.colorscheme 'rose-pine'
-    -- end,
-  },
-
-  {
-    'projekt0n/github-nvim-theme',
-    priority = 1000,
-    lazy = false,
-    config = function()
-      require('github-theme').setup({})
-      vim.cmd.colorscheme 'github_dark'
-    end,
-  },
-
-  {
-    -- Set lualine as statusline
-    'nvim-lualine/lualine.nvim',
-    -- See `:help lualine.txt`
-    opts = {
-      options = {
-        icons_enabled = false,
-        theme = 'auto',
-        component_separators = '|',
-        section_separators = '',
-      },
-      sections = {
-        lualine_a = {'mode'},
-        lualine_b = {'branch', 'diff', 'diagnostics'},
-        lualine_c = {{ 'filename', path = 1 }},
-        lualine_x = {'encoding', 'fileformat', 'filetype'},
-        lualine_y = {'progress'},
-        lualine_z = {'location'}
-      },
-    },
-  },
-
-  {
-    -- Add indentation guides even on blank lines
-    'lukas-reineke/indent-blankline.nvim',
-    -- Enable `lukas-reineke/indent-blankline.nvim`
-    -- See `:help ibl`
-    main = 'ibl',
-    opts = {},
-  },
-
-  -- "gc" to comment visual regions/lines
-  { 'numToStr/Comment.nvim', opts = {} },
-
   -- Fuzzy Finder (files, lsp, etc)
   {
     'nvim-telescope/telescope.nvim',
@@ -426,7 +201,7 @@ require('lazy').setup({
   --    Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --
   --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 }, {})
 
 -- [[ Setting options ]]
@@ -654,9 +429,9 @@ vim.defer_fn(function()
         },
         swap = {
           enable = true,
-          swap_next = {
-            ['<leader>a'] = '@parameter.inner',
-          },
+          -- swap_next = {
+          --   ['<leader>a'] = '@parameter.inner',
+          -- },
           swap_previous = {
             ['<leader>A'] = '@parameter.inner',
           },
@@ -668,7 +443,6 @@ end, 0)
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
 vim.api.nvim_create_autocmd("LspAttach",{callback = function(event)
-  print("LSP attaching")
   local bufnr = event.buf
   -- NOTE: Remember that lua is a real programming language, and as such it is possible
   -- to define small helper and utility functions so you don't have to repeat yourself
@@ -779,11 +553,6 @@ local servers = {
 -- Setup neovim lua configuration
 require('neodev').setup()
 
--- nvim-cmp supports additional completion capabilities, so broadcast that to servers
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
-
-
 require('mason-tool-installer').setup{ensure_installed = vim.tbl_keys(servers)}
 
 -- Ensure the servers above are installed
@@ -798,75 +567,5 @@ mason_lspconfig.setup {
   end,
 }
 
--- [[ Configure nvim-cmp ]]
--- See `:help cmp`
-local cmp = require 'cmp'
-local luasnip = require 'luasnip'
-require('luasnip.loaders.from_vscode').lazy_load()
-luasnip.config.setup {}
-
-cmp.setup {
-  snippet = {
-    expand = function(args)
-      luasnip.lsp_expand(args.body)
-    end,
-  },
-  completion = {
-    completeopt = 'menu,menuone,noinsert',
-  },
-  mapping = cmp.mapping.preset.insert {
-    ['<C-j>'] = cmp.mapping.select_next_item(),
-    ['<C-k>'] = cmp.mapping.select_prev_item(),
-    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete {},
-    ['<Tab>'] = cmp.mapping.confirm {
-      behavior = cmp.ConfirmBehavior.Replace,
-      select = true,
-    },
-    -- ['<Tab>'] = cmp.mapping(function(fallback)
-    --   if cmp.visible() then
-    --     cmp.select_next_item()
-    --   elseif luasnip.expand_or_locally_jumpable() then
-    --     luasnip.expand_or_jump()
-    --   else
-    --     fallback()
-    --   end
-    -- end, { 'i', 's' }),
-    -- ['<S-Tab>'] = cmp.mapping(function(fallback)
-    --   if cmp.visible() then
-    --     cmp.select_prev_item()
-    --   elseif luasnip.locally_jumpable(-1) then
-    --     luasnip.jump(-1)
-    --   else
-    --     fallback()
-    --   end
-    -- end, { 'i', 's' }),
-  },
-  sources = {
-    { name = 'nvim_lsp' },
-    { name = 'luasnip' },
-    { name = 'path' },
-  },
-}
-
--- The ine beneath this is called `modeline`. See `:help modeline`
+-- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
-
--- Harpoon keybinds
--- Almost none of these work lol
-
--- vim.keymap.set('n', '<leader>e', require('harpoon.mark').add_file, { desc = "Add to Harpoon" })
--- vim.keymap.set('n', '<C-e>', require('harpoon.ui').toggle_quick_menu, { desc = "Show Harpoon menu" })
--- vim.keymap.set('n', '<A-}>', require('harpoon.ui').nav_next, { desc = "Harpoon next tab" })
--- vim.keymap.set('n', '<A-{>', require('harpoon.ui').nav_prev, { desc = "Harpoon previous tab" })
-
--- vim.keymap.set('n', '<A-1>', function() require('harpoon.ui').nav_file(1) end)
--- vim.keymap.set('n', '<A-2>', function() require('harpoon.ui').nav_file(2) end)
--- vim.keymap.set('n', '<A-3>', function() require('harpoon.ui').nav_file(3) end)
--- vim.keymap.set('n', '<A-4>', function() require('harpoon.ui').nav_file(4) end)
-
--- Fugitive
-vim.keymap.set('n', '<leader>gs',vim.cmd.Git, { desc = "[G]it [S]tatus" })
-
-vim.keymap.set('n', '<C-/>', function() vim.cmd(":vsplit") end)
