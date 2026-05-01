@@ -94,6 +94,39 @@ require('lazy').setup({
     },
   },
 
+  { -- Collection of various small independent plugins/modules
+    'nvim-mini/mini.nvim',
+    config = function()
+      -- Better Around/Inside textobjects
+      do
+        local gen_ts = require('mini.ai').gen_spec.treesitter
+        require('mini.ai').setup {
+          -- NOTE: Avoid conflicts with the built-in incremental selection mappings on Neovim>=0.12 (see `:help treesitter-incremental-selection`)
+          mappings = {
+            around_next = 'aa',
+            inside_next = 'ii',
+          },
+          n_lines = 500,
+          -- Treesitter-powered textobjects exposed to mini.ai
+          custom_textobjects = {
+            m = gen_ts({ a = '@function.outer', i = '@function.inner' }),
+            c = gen_ts({ a = '@class.outer', i = '@class.inner' }),
+            p = gen_ts({ a = '@parameter.outer', i = '@parameter.inner' }),
+            s = gen_ts({ a = '@local.scope', i = '@local.scope' }),
+          },
+        }
+      end
+
+      -- Add/delete/replace surroundings (brackets, quotes, etc.)
+      require('mini.surround').setup()
+
+      -- Simple and easy statusline.
+      local statusline = require 'mini.statusline'
+      statusline.setup { use_icons = vim.g.have_nerd_font }
+      statusline.section_location = function() return '%2l:%-2v' end
+    end,
+  },
+
   -- Useful plugin to show you pending keybinds.
   { 
     'folke/which-key.nvim',
@@ -180,13 +213,46 @@ require('lazy').setup({
     },
   },
 
+
   {
     -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter-textobjects',
-    },
     build = ':TSUpdate',
+    lazy = false,
+    branch = 'main',
+    config = function()
+      local parsers = {
+        'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'typescript',
+        'vimdoc', 'vim', 'terraform', 'bash', 'markdown', 'markdown_inline',
+      }
+      require('nvim-treesitter').install(parsers)
+
+      ---@param buf integer
+      ---@param language string
+      local function treesitter_try_attach(buf, language)
+        if not vim.treesitter.language.add(language) then return end
+        vim.treesitter.start(buf, language)
+        local has_indent_query = vim.treesitter.query.get(language, 'indents') ~= nil
+        if has_indent_query then vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()" end
+      end
+
+      local available_parsers = require('nvim-treesitter').get_available()
+      vim.api.nvim_create_autocmd('FileType', {
+        callback = function(args)
+          local buf, filetype = args.buf, args.match
+          local language = vim.treesitter.language.get_lang(filetype)
+          if not language then return end
+          local installed_parsers = require('nvim-treesitter').get_installed 'parsers'
+          if vim.tbl_contains(installed_parsers, language) then
+            treesitter_try_attach(buf, language)
+          elseif vim.tbl_contains(available_parsers, language) then
+            require('nvim-treesitter').install(language):await(function() treesitter_try_attach(buf, language) end)
+          else
+            treesitter_try_attach(buf, language)
+          end
+        end,
+      })
+    end,
   },
 
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
@@ -370,75 +436,6 @@ vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc
 vim.keymap.set('n', '<leader>sG', ':LiveGrepGitRoot<cr>', { desc = '[S]earch by [G]rep on Git Root' })
 vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
 vim.keymap.set('n', '<leader>sr', require('telescope.builtin').resume, { desc = '[S]earch [R]esume' })
-
--- [[ Configure Treesitter ]]
--- See `:help nvim-treesitter`
-vim.defer_fn(function()
----@diagnostic disable-next-line: missing-fields
-  require('nvim-treesitter.configs').setup {
-    -- Add languages to be installed here that you want installed for treesitter
-    ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'typescript', 'vimdoc', 'vim', 'terraform', 'bash'},
-
-    -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
-    auto_install = true,
-
-    highlight = { enable = true },
-    indent = { enable = true },
-    incremental_selection = {
-      enable = true,
-      keymaps = {
-        init_selection = '<C-space>',
-        node_incremental = '<C-space>',
-        scope_incremental = '<C-s>',
-        node_decremental = '<M-space>',
-      },
-    },
-    textobjects = {
-        select = {
-          enable = true,
-          lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
-          keymaps = {
-            -- You can use the capture groups defined in textobjects.scm
-            ['aa'] = '@parameter.outer',
-            ['ia'] = '@parameter.inner',
-            ['af'] = '@function.outer',
-            ['if'] = '@function.inner',
-            ['ac'] = '@class.outer',
-            ['ic'] = '@class.inner',
-          },
-        },
-        move = {
-          enable = true,
-          set_jumps = true, -- whether to set jumps in the jumplist
-          goto_next_start = {
-            [']m'] = '@function.outer',
-            [']]'] = '@class.outer',
-          },
-          goto_next_end = {
-            [']M'] = '@function.outer',
-            [']['] = '@class.outer',
-          },
-          goto_previous_start = {
-            ['[m'] = '@function.outer',
-            ['[['] = '@class.outer',
-          },
-          goto_previous_end = {
-            ['[M'] = '@function.outer',
-            ['[]'] = '@class.outer',
-          },
-        },
-        swap = {
-          enable = true,
-          -- swap_next = {
-          --   ['<leader>a'] = '@parameter.inner',
-          -- },
-          swap_previous = {
-            ['<leader>A'] = '@parameter.inner',
-          },
-        },
-      },
-    }
-end, 0)
 
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.

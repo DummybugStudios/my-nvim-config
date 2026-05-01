@@ -11,8 +11,5 @@ return {
 
   -- Detect tabstop and shiftwidth automatically
   'tpope/vim-sleuth',
-
-  -- Surround text objects
-  'tpope/vim-surround',
 }
 
